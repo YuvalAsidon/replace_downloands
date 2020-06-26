@@ -1,5 +1,5 @@
 # replace_downloands
-Replacing .exe downloads with any kind of download we provide beforehand
+Replacing .exe downloads with any kind of download we provide beforehand and bypassing https by sslstrip
 
 ## Install netfilterqueue
 * sudo apt install python3-pip git libnfnetlink-dev libnetfilter-queue-dev
