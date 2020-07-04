@@ -23,9 +23,6 @@ def process_packet(pkt):
     if scapy_pkt.haslayer(scapy.Raw):
         # dport - destination port (request)
         # if in the TCP layer n dport it set to 80 (http)
-        print(scapy_pkt[scapy.TCP].dport)
-        print(scapy_pkt[scapy.TCP].sport)
-        print("__________")
         if scapy_pkt[scapy.TCP].dport == 10000:
             # if the user download something it will have .exe in the load
             if ".exe" in scapy_pkt[scapy.Raw].load and "10.0.2.4" not in scapy_pkt[scapy.Raw].load:
